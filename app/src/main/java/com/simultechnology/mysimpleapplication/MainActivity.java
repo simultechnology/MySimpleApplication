@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -23,6 +25,16 @@ public class MainActivity extends AppCompatActivity {
 
     private LocationManager mLocationManager;
     private WebView mWebView;
+
+
+    // JavaScriptから呼び出したいメソッドを定義したクラス
+    class JsObject {
+        //JavaScriptから呼び出したいメソッド
+        @JavascriptInterface
+        public String toString() {
+            return "JsObject aaaaa";
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +54,8 @@ public class MainActivity extends AppCompatActivity {
 
         mLocationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         boolean gpsFlg = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        Log.d("NETWORK Enabled", gpsFlg ? "OK" : "NG");
+        //boolean gpsFlg = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        Log.d("GPS Enabled", gpsFlg ? "OK" : "NG");
         onBtnGpsClicked();
 
         Button gpsBtn = (Button) findViewById(R.id.gps_btn);
@@ -57,7 +70,22 @@ public class MainActivity extends AppCompatActivity {
         mWebView = (WebView) findViewById(R.id.webview);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-        mWebView.setWebChromeClient(new WebChromeClient());
+//        webSettings.setAppCacheEnabled(true);
+//        webSettings.setDatabaseEnabled(true);
+//        webSettings.setDomStorageEnabled(true);
+        webSettings.setGeolocationEnabled(true);
+
+        //mWebView.setWebChromeClient(new WebChromeClient());
+
+        mWebView.setWebChromeClient(new WebChromeClient() {
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin, true, false);
+            }
+        });
+
+        // JavaインスタンスをWebViewに登録する
+        mWebView.addJavascriptInterface(new JsObject(), "JsObject");
+
         mWebView.loadUrl("https://sample-simultechnology.c9users.io/map.html");
         //myWebView.loadUrl("http://www.yahoo.co.jp");
 
